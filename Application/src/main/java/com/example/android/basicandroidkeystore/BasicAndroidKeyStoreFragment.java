@@ -23,6 +23,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
+import android.security.KeyChainException;
 import android.security.KeyPairGeneratorSpec;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
@@ -35,16 +36,19 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -87,75 +91,82 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.btn_create_keys:
-                try {
-                    createKeys(getActivity());
-                    Log.d(TAG, "Keys created");
-                    return true;
-                } catch (NoSuchAlgorithmException e) {
-                    Log.w(TAG, "RSA not supported", e);
-                } catch (InvalidAlgorithmParameterException e) {
-                    Log.w(TAG, "No such provider: AndroidKeyStore");
-                } catch (NoSuchProviderException e) {
-                    Log.w(TAG, "Invalid Algorithm Parameter Exception", e);
-                }
-                return true;
-
             case R.id.btn_select_key:
                 KeyChain.choosePrivateKeyAlias(getActivity(), new KeyChainAliasCallback() {
                     @Override
                     public void alias(@Nullable String alias) {
                         mAlias = alias;
-                    }}, null, null, "fakehost", -1, mAlias);
+                    }
+                }, null, null, "fakehost", -1, mAlias);
 
                 return true;
             case R.id.btn_sign_data:
-                try {
-                    mSignatureStr = signData(SAMPLE_INPUT);
-                } catch (KeyStoreException e) {
-                    Log.w(TAG, "KeyStore not Initialized", e);
-                } catch (UnrecoverableEntryException e) {
-                    Log.w(TAG, "KeyPair not recovered", e);
-                } catch (NoSuchAlgorithmException e) {
-                    Log.w(TAG, "RSA not supported", e);
-                } catch (InvalidKeyException e) {
-                    Log.w(TAG, "Invalid Key", e);
-                } catch (SignatureException e) {
-                    Log.w(TAG, "Invalid Signature", e);
-                } catch (IOException e) {
-                    Log.w(TAG, "IO Exception", e);
-                } catch (CertificateException e) {
-                    Log.w(TAG, "Error occurred while loading certificates", e);
-                }
-                Log.d(TAG, "Signature: " + mSignatureStr);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        try {
+                            mSignatureStr = signData(SAMPLE_INPUT);
+                        } catch (KeyStoreException e) {
+                            Log.w(TAG, "KeyStore not Initialized", e);
+                        } catch (UnrecoverableEntryException e) {
+                            Log.w(TAG, "KeyPair not recovered", e);
+                        } catch (NoSuchAlgorithmException e) {
+                            Log.w(TAG, "RSA not supported", e);
+                        } catch (InvalidKeyException e) {
+                            Log.w(TAG, "Invalid Key", e);
+                        } catch (SignatureException e) {
+                            Log.w(TAG, "Invalid Signature", e);
+                        } catch (IOException e) {
+                            Log.w(TAG, "IO Exception", e);
+                        } catch (CertificateException e) {
+                            Log.w(TAG, "Error occurred while loading certificates", e);
+                        } catch (InterruptedException e) {
+                            Log.w(TAG, "Error occurred while loading certificates", e);
+                        } catch (KeyChainException e) {
+                            Log.w(TAG, "Error occurred while loading certificates", e);
+                        }
+                        Log.d(TAG, "Signature: " + mSignatureStr);
+
+                    }
+                }).start();
                 return true;
 
             case R.id.btn_verify_data:
-                boolean verified = false;
-                try {
-                    if (mSignatureStr != null) {
-                        verified = verifyData(SAMPLE_INPUT, mSignatureStr);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        boolean verified = false;
+                        try {
+                            if (mSignatureStr != null) {
+                                verified = verifyData(SAMPLE_INPUT, mSignatureStr);
+                            }
+                        } catch (KeyStoreException e) {
+                            Log.w(TAG, "KeyStore not Initialized", e);
+                        } catch (CertificateException e) {
+                            Log.w(TAG, "Error occurred while loading certificates", e);
+                        } catch (NoSuchAlgorithmException e) {
+                            Log.w(TAG, "RSA not supported", e);
+                        } catch (IOException e) {
+                            Log.w(TAG, "IO Exception", e);
+                        } catch (UnrecoverableEntryException e) {
+                            Log.w(TAG, "KeyPair not recovered", e);
+                        } catch (InvalidKeyException e) {
+                            Log.w(TAG, "Invalid Key", e);
+                        } catch (SignatureException e) {
+                            Log.w(TAG, "Invalid Signature", e);
+                        } catch (InterruptedException e) {
+                            Log.w(TAG, "Error occurred while loading certificates", e);
+                        } catch (KeyChainException e) {
+                            Log.w(TAG, "Error occurred while loading certificates", e);
+                        }
+                        if (verified) {
+                            Log.d(TAG, "Data Signature Verified");
+                        } else {
+                            Log.d(TAG, "Data not verified.");
+                        }
                     }
-                } catch (KeyStoreException e) {
-                    Log.w(TAG, "KeyStore not Initialized", e);
-                } catch (CertificateException e) {
-                    Log.w(TAG, "Error occurred while loading certificates", e);
-                } catch (NoSuchAlgorithmException e) {
-                    Log.w(TAG, "RSA not supported", e);
-                } catch (IOException e) {
-                    Log.w(TAG, "IO Exception", e);
-                } catch (UnrecoverableEntryException e) {
-                    Log.w(TAG, "KeyPair not recovered", e);
-                } catch (InvalidKeyException e) {
-                    Log.w(TAG, "Invalid Key", e);
-                } catch (SignatureException e) {
-                    Log.w(TAG, "Invalid Signature", e);
-                }
-                if (verified) {
-                    Log.d(TAG, "Data Signature Verified");
-                } else {
-                    Log.d(TAG, "Data not verified.");
-                }
+                }).start();
                 return true;
         }
         return false;
@@ -233,9 +244,10 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
      */
     public String signData(String inputStr) throws KeyStoreException,
             UnrecoverableEntryException, NoSuchAlgorithmException, InvalidKeyException,
-            SignatureException, IOException, CertificateException {
+            SignatureException, IOException, CertificateException, KeyChainException, InterruptedException {
         byte[] data = inputStr.getBytes();
 
+        /*
         // BEGIN_INCLUDE(sign_load_keystore)
         KeyStore ks = KeyStore.getInstance(SecurityConstants.KEYSTORE_PROVIDER_ANDROID_KEYSTORE);
 
@@ -245,6 +257,11 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
 
         // Load the key pair from the Android Key Store
         KeyStore.Entry entry = ks.getEntry(mAlias, null);
+        */
+
+        PrivateKey privatekey = null;
+        privatekey = KeyChain.getPrivateKey(getActivity(), mAlias);
+
 
         /* If the entry is null, keys were never stored under this alias.
          * Debug steps in this situation would be:
@@ -253,23 +270,12 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
          * -If that's empty, verify they were both stored and pulled from the same keystore
          *   "AndroidKeyStore"
          */
-        if (entry == null) {
+        if (privatekey == null) {
             Log.w(TAG, "No key found under alias: " + mAlias);
             Log.w(TAG, "Exiting signData()...");
             return null;
         }
 
-        /* If entry is not a KeyStore.PrivateKeyEntry, it might have gotten stored in a previous
-         * iteration of your application that was using some other mechanism, or been overwritten
-         * by something else using the same keystore with the same alias.
-         * You can determine the type using entry.getClass() and debug from there.
-         */
-        if (!(entry instanceof KeyStore.PrivateKeyEntry)) {
-            Log.w(TAG, "Not an instance of a PrivateKeyEntry");
-            Log.w(TAG, "Exiting signData()...");
-            return null;
-        }
-        // END_INCLUDE(sign_data)
 
         // BEGIN_INCLUDE(sign_create_signature)
         // This class doesn't actually represent the signature,
@@ -278,7 +284,7 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
         Signature s = Signature.getInstance(SecurityConstants.SIGNATURE_SHA256withRSA);
 
         // Initialize Signature using specified private key
-        s.initSign(((KeyStore.PrivateKeyEntry) entry).getPrivateKey());
+        s.initSign(privatekey);
 
         // Sign the data, store the result as a Base64 encoded String.
         s.update(data);
@@ -299,7 +305,7 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
      */
     public boolean verifyData(String input, String signatureStr) throws KeyStoreException,
             CertificateException, NoSuchAlgorithmException, IOException,
-            UnrecoverableEntryException, InvalidKeyException, SignatureException {
+            UnrecoverableEntryException, InvalidKeyException, SignatureException, KeyChainException, InterruptedException {
         byte[] data = input.getBytes();
         byte[] signature;
         // BEGIN_INCLUDE(decode_signature)
@@ -323,23 +329,14 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
         }
         // END_INCLUDE(decode_signature)
 
-        KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
-
-        // Weird artifact of Java API.  If you don't have an InputStream to load, you still need
-        // to call "load", or it'll crash.
-        ks.load(null);
-
         // Load the key pair from the Android Key Store
-        KeyStore.Entry entry = ks.getEntry(mAlias, null);
+        X509Certificate[] certchain = null;
+        certchain = KeyChain.getCertificateChain(getActivity(), mAlias);
 
-        if (entry == null) {
-            Log.w(TAG, "No key found under alias: " + mAlias);
+
+        if (certchain == null) {
+            Log.w(TAG, "No cert found under alias: " + mAlias);
             Log.w(TAG, "Exiting verifyData()...");
-            return false;
-        }
-
-        if (!(entry instanceof KeyStore.PrivateKeyEntry)) {
-            Log.w(TAG, "Not an instance of a PrivateKeyEntry");
             return false;
         }
 
@@ -350,7 +347,7 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
 
         // BEGIN_INCLUDE(verify_data)
         // Verify the data.
-        s.initVerify(((KeyStore.PrivateKeyEntry) entry).getCertificate());
+        s.initVerify(certchain[0]);
         s.update(data);
         return s.verify(signature);
         // END_INCLUDE(verify_data)

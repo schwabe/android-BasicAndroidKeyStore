@@ -19,10 +19,6 @@
           android:showAsAction="always"
           android:title="@string/str_select_key" />
 
-    <item android:id="@+id/btn_create_keys"
-        android:showAsAction="always"
-        android:title="@string/str_create_keys" />
-
     <item android:id="@+id/btn_sign_data"
           android:showAsAction="always"
           android:title="@string/str_sign_data" />
