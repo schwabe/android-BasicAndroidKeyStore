@@ -18,4 +18,6 @@
     <string name="str_create_keys">Create</string>
     <string name="str_sign_data">Sign</string>
     <string name="str_verify_data">Verify</string>
+    <string name="str_select_key">Select Key</string>
+
 </resources>

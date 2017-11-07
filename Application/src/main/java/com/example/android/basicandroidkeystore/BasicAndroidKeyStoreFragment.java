@@ -21,9 +21,12 @@ import com.example.android.common.logger.Log;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
+import android.security.KeyChain;
+import android.security.KeyChainAliasCallback;
 import android.security.KeyPairGeneratorSpec;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Base64;
 import android.view.MenuItem;
@@ -57,7 +60,7 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
     public static final String SAMPLE_ALIAS = "myKey";
 
     // Some sample data to sign, and later verify using the generated signature.
-    public static final String SAMPLE_INPUT="Hello, Android!";
+    public static final String SAMPLE_INPUT = "Hello, Android!";
 
     // Just a handy place to store the signature in between signing and verifying.
     public String mSignatureStr = null;
@@ -96,6 +99,15 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
                 } catch (NoSuchProviderException e) {
                     Log.w(TAG, "Invalid Algorithm Parameter Exception", e);
                 }
+                return true;
+
+            case R.id.btn_select_key:
+                KeyChain.choosePrivateKeyAlias(getActivity(), new KeyChainAliasCallback() {
+                    @Override
+                    public void alias(@Nullable String alias) {
+                        mAlias = alias;
+                    }}, null, null, "fakehost", -1, mAlias);
+
                 return true;
             case R.id.btn_sign_data:
                 try {
@@ -216,6 +228,7 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
     /**
      * Signs the data using the key pair stored in the Android Key Store.  This signature can be
      * used with the data later to verify it was signed by this application.
+     *
      * @return A string encoding of the data signature generated
      */
     public String signData(String inputStr) throws KeyStoreException,
@@ -279,7 +292,8 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
     /**
      * Given some data and a signature, uses the key pair stored in the Android Key Store to verify
      * that the data was signed by this application, using that key pair.
-     * @param input The data to be verified.
+     *
+     * @param input        The data to be verified.
      * @param signatureStr The signature provided for the data.
      * @return A boolean value telling you whether the signature is valid or not.
      */
