@@ -19,6 +19,7 @@ package com.example.android.basicandroidkeystore;
 import com.example.android.common.logger.Log;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.security.KeyChain;
@@ -31,8 +32,10 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Base64;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -111,6 +114,7 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
                             Log.w(TAG, "KeyStore not Initialized", e);
                         } catch (UnrecoverableEntryException e) {
                             Log.w(TAG, "KeyPair not recovered", e);
+                            e.printStackTrace();
                         } catch (NoSuchAlgorithmException e) {
                             Log.w(TAG, "RSA not supported", e);
                         } catch (InvalidKeyException e) {
@@ -121,10 +125,13 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
                             Log.w(TAG, "IO Exception", e);
                         } catch (CertificateException e) {
                             Log.w(TAG, "Error occurred while loading certificates", e);
+                            e.printStackTrace();
                         } catch (InterruptedException e) {
                             Log.w(TAG, "Error occurred while loading certificates", e);
+                            e.printStackTrace();
                         } catch (KeyChainException e) {
                             Log.w(TAG, "Error occurred while loading certificates", e);
+                            e.printStackTrace();
                         }
                         Log.d(TAG, "Signature: " + mSignatureStr);
 
@@ -167,6 +174,18 @@ public class BasicAndroidKeyStoreFragment extends Fragment {
                         }
                     }
                 }).start();
+                return true;
+
+            case R.id.btn_import_asset:
+
+                String client_p12 = "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";
+                byte[] pkcs12data = Base64.decode(client_p12, Base64.DEFAULT);
+
+                Intent i = KeyChain.createInstallIntent();
+                i.putExtra(KeyChain.EXTRA_PKCS12, pkcs12data);
+                i.putExtra(KeyChain.EXTRA_NAME, "client");
+                startActivity(i);
+                Toast.makeText(getActivity(), "Use password as password", Toast.LENGTH_LONG).show();
                 return true;
         }
         return false;

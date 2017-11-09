@@ -19,5 +19,6 @@
     <string name="str_sign_data">Sign</string>
     <string name="str_verify_data">Verify</string>
     <string name="str_select_key">Select Key</string>
+    <string name="str_internal">Import internal key</string>
 
 </resources>
